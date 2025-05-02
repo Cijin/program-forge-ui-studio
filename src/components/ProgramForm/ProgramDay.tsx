@@ -33,6 +33,13 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
   const [programExercises, setProgramExercises] = useState<Array<{ sets: string; info: string }>>([]);
   const [optionalExercises, setOptionalExercises] = useState<Array<{ sets: string; info: string }>>([]);
   
+  const [warmUpUpperBody, setWarmUpUpperBody] = useState("");
+  const [warmUpLowerBody, setWarmUpLowerBody] = useState("");
+  const [coolDownUpperBody, setCoolDownUpperBody] = useState("");
+  const [coolDownLowerBody, setCoolDownLowerBody] = useState("");
+  const [cardioAddon, setCardioAddon] = useState("");
+  const [absAddon, setAbsAddon] = useState("");
+  
   const addProgramExercise = () => {
     setProgramExercises([...programExercises, { sets: '', info: '' }]);
   };
@@ -108,11 +115,17 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
         <RelationField 
           id={`warm_up_upper_body_${dayIndex}`}
           label="warm_up_upper_body"
+          type="warmup"
+          value={warmUpUpperBody}
+          onChange={setWarmUpUpperBody}
         />
         
         <RelationField 
           id={`warm_up_lower_body_${dayIndex}`}
           label="warm_up_lower_body"
+          type="warmup"
+          value={warmUpLowerBody}
+          onChange={setWarmUpLowerBody}
         />
       </div>
       
@@ -120,11 +133,17 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
         <RelationField 
           id={`cool_down_upper_body_${dayIndex}`}
           label="cool_down_upper_body"
+          type="cooldown"
+          value={coolDownUpperBody}
+          onChange={setCoolDownUpperBody}
         />
         
         <RelationField 
           id={`cool_down_lower_body_${dayIndex}`}
           label="cool_down_lower_body"
+          type="cooldown"
+          value={coolDownLowerBody}
+          onChange={setCoolDownLowerBody}
         />
       </div>
       
@@ -132,6 +151,9 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
         <RelationField 
           id={`cardio_${dayIndex}`}
           label="cardio"
+          type="cardio"
+          value={cardioAddon}
+          onChange={setCardioAddon}
         />
       </div>
       
@@ -213,6 +235,9 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
         <RelationField 
           id={`abs_${dayIndex}`}
           label="abs"
+          type="abs"
+          value={absAddon}
+          onChange={setAbsAddon}
         />
       </div>
     </div>

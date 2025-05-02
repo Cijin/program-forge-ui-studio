@@ -9,7 +9,6 @@ import ProgramDay from './ProgramDay';
 
 const ProgramForm: React.FC = () => {
   const [formData, setFormData] = useState({
-    programId: '',
     name: '',
     fitnessLevel: '',
     minutesPerDay: '',
@@ -81,16 +80,7 @@ const ProgramForm: React.FC = () => {
 
       <div className="p-6">
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TextField
-              id="program_id"
-              label="program_id"
-              required
-              placeholder="Enter program unique ID"
-              value={formData.programId}
-              onChange={(value) => handleInputChange('programId', value)}
-            />
-
+          <div className="grid grid-cols-1">
             <TextField
               id="name"
               label="name"
