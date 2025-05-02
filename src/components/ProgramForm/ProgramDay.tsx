@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2, ChevronDown, Plus } from "lucide-react";
 import { 
   Accordion, 
   AccordionContent, 
