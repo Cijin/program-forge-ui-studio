@@ -6,34 +6,52 @@ import TextField from './TextField';
 import SelectField from './SelectField';
 import ToggleField from './ToggleField';
 import ProgramDay from './ProgramDay';
+import { v4 as uuidv4 } from 'uuid';
+import { NewProgram, NewProgramDay, NewExerciseGroup } from '@/types/program';
 
 const ProgramForm: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<NewProgram, 'program_days'>>({
     name: '',
-    fitnessLevel: '',
-    minutesPerDay: '',
-    daysPerWeek: '',
-    healthCondition: '',
-    equipmentRangeRequired: '',
-    equipmentRequired: false,
-    autoAssignAllowed: false
+    fitness_level: '',
+    minutes_per_day: 0,
+    days_per_week: 0,
+    health_condition: '',
+    equipment_range_required: 0,
+    auto_assign_allowed: false
   });
 
-  const [programDays, setProgramDays] = useState([
-    { id: 1, workoutName: '', workoutType: '' }
+  const [programDays, setProgramDays] = useState<NewProgramDay[]>([
+    { 
+      unique_key: uuidv4(),
+      name: '', 
+      type: '',
+      warm_up_upper_body: '',
+      warm_up_lower_body: '',
+      cool_down_upper_body: '',
+      cool_down_lower_body: '',
+      cardio: '',
+      abs: '',
+      exercise_groups: [] 
+    }
   ]);
 
   const fitnessLevels = ['Beginner', 'Intermediate', 'Advanced'];
   const minutesOptions = ['15', '30', '45', '60', '90'];
   const daysOptions = ['2', '3', '4', '5', '6', '7'];
   const healthConditions = ['None', 'Back Pain', 'Knee Pain', 'Shoulder Pain', 'Pregnancy'];
-  const equipmentRanges = ['None', 'Minimal', 'Basic', 'Full Gym'];
+  const equipmentRanges = ['0', '1', '2', '3'];
+  const equipmentRangeLabels = {
+    '0': 'None',
+    '1': 'Minimal',
+    '2': 'Basic',
+    '3': 'Full Gym'
+  };
 
   const handleInputChange = (field: keyof typeof formData, value: any) => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleProgramDayChange = (index: number, field: string, value: string) => {
+  const handleProgramDayChange = (index: number, field: string, value: any) => {
     const updatedDays = [...programDays];
     updatedDays[index] = { ...updatedDays[index], [field]: value };
     setProgramDays(updatedDays);
@@ -41,9 +59,16 @@ const ProgramForm: React.FC = () => {
 
   const addProgramDay = () => {
     setProgramDays([...programDays, { 
-      id: programDays.length + 1, 
-      workoutName: '', 
-      workoutType: '' 
+      unique_key: uuidv4(),
+      name: '', 
+      type: '',
+      warm_up_upper_body: '',
+      warm_up_lower_body: '',
+      cool_down_upper_body: '',
+      cool_down_lower_body: '',
+      cardio: '',
+      abs: '',
+      exercise_groups: []
     }]);
   };
 
@@ -55,7 +80,14 @@ const ProgramForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form Data:', { ...formData, programDays });
+    
+    // Create the final program object
+    const program: NewProgram = {
+      ...formData,
+      program_days: programDays
+    };
+    
+    console.log('Program Data:', program);
     toast.success("Program created successfully!");
   };
 
@@ -93,22 +125,19 @@ const ProgramForm: React.FC = () => {
 
           <div className="mt-6">
             <label className="text-sm text-gray-300 flex items-center gap-1.5">
-              program_week
+              program_days
               <span className="text-xs text-program-accent">*</span>
             </label>
             
             <div className="mt-2 border border-program-border rounded-lg">
               {programDays.map((day, index) => (
-                <div key={day.id} className="mb-4">
+                <div key={day.unique_key} className="mb-4">
                   <ProgramDay
-                    dayIndex={day.id}
+                    dayIndex={index + 1}
                     onDelete={() => removeProgramDay(index)}
-                    data={{
-                      workoutName: day.workoutName,
-                      workoutType: day.workoutType
-                    }}
+                    data={day}
                     onDataChange={(field, value) => 
-                      handleProgramDayChange(index, field as string, value)
+                      handleProgramDayChange(index, field, value)
                     }
                   />
                 </div>
@@ -131,8 +160,8 @@ const ProgramForm: React.FC = () => {
               label="fitness_level"
               required
               options={fitnessLevels}
-              value={formData.fitnessLevel}
-              onChange={(value) => handleInputChange('fitnessLevel', value)}
+              value={formData.fitness_level}
+              onChange={(value) => handleInputChange('fitness_level', value)}
             />
 
             <SelectField
@@ -140,8 +169,8 @@ const ProgramForm: React.FC = () => {
               label="minutes_per_day"
               required
               options={minutesOptions}
-              value={formData.minutesPerDay}
-              onChange={(value) => handleInputChange('minutesPerDay', value)}
+              value={formData.minutes_per_day.toString()}
+              onChange={(value) => handleInputChange('minutes_per_day', parseInt(value) || 0)}
             />
 
             <SelectField
@@ -149,8 +178,8 @@ const ProgramForm: React.FC = () => {
               label="days_per_week"
               required
               options={daysOptions}
-              value={formData.daysPerWeek}
-              onChange={(value) => handleInputChange('daysPerWeek', value)}
+              value={formData.days_per_week.toString()}
+              onChange={(value) => handleInputChange('days_per_week', parseInt(value) || 0)}
             />
           </div>
 
@@ -160,35 +189,28 @@ const ProgramForm: React.FC = () => {
               label="health_condition"
               required
               options={healthConditions}
-              value={formData.healthCondition}
-              onChange={(value) => handleInputChange('healthCondition', value)}
+              value={formData.health_condition}
+              onChange={(value) => handleInputChange('health_condition', value)}
             />
 
             <SelectField
               id="equipment_range_required"
               label="equipment_range_required"
               required
-              options={equipmentRanges}
-              value={formData.equipmentRangeRequired}
-              onChange={(value) => handleInputChange('equipmentRangeRequired', value)}
+              options={Object.keys(equipmentRangeLabels)}
+              optionLabels={equipmentRangeLabels}
+              value={formData.equipment_range_required.toString()}
+              onChange={(value) => handleInputChange('equipment_range_required', parseInt(value) || 0)}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <ToggleField
-              id="equipment_required"
-              label="equipment_required"
-              required
-              value={formData.equipmentRequired}
-              onChange={(value) => handleInputChange('equipmentRequired', value)}
-            />
-
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-6">
             <ToggleField
               id="auto_assign_allowed"
               label="auto_assign_allowed"
               required
-              value={formData.autoAssignAllowed}
-              onChange={(value) => handleInputChange('autoAssignAllowed', value)}
+              value={formData.auto_assign_allowed}
+              onChange={(value) => handleInputChange('auto_assign_allowed', value)}
             />
           </div>
 

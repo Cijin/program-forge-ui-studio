@@ -11,6 +11,7 @@ interface TextFieldProps {
   onChange: (value: string) => void;
   className?: string;
   helpText?: string;
+  type?: string;
 }
 
 const TextField = ({ 
@@ -21,7 +22,8 @@ const TextField = ({
   value, 
   onChange, 
   className,
-  helpText 
+  helpText,
+  type = "text" 
 }: TextFieldProps) => {
   return (
     <div className={cn("flex flex-col gap-1", className)}>
@@ -30,7 +32,7 @@ const TextField = ({
         {required && <span className="text-xs text-program-accent">*</span>}
       </label>
       <input
-        type="text"
+        type={type}
         id={id}
         value={value}
         placeholder={placeholder}
@@ -39,6 +41,7 @@ const TextField = ({
           "w-full bg-program-panel text-white rounded px-4 py-2 border border-program-border",
           "focus:outline-none focus:ring-1 focus:ring-program-accent"
         )}
+        min={type === "number" ? "0" : undefined}
       />
       {helpText && (
         <p className="text-xs text-gray-400 mt-1">{helpText}</p>

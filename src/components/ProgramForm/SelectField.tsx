@@ -9,6 +9,7 @@ interface SelectFieldProps {
   placeholder?: string;
   required?: boolean;
   options: string[];
+  optionLabels?: Record<string, string>;
   value: string;
   onChange: (value: string) => void;
   className?: string;
@@ -20,6 +21,7 @@ const SelectField = ({
   placeholder = "Choose here", 
   required = false, 
   options, 
+  optionLabels = {},
   value, 
   onChange, 
   className 
@@ -43,7 +45,7 @@ const SelectField = ({
           <option value="">{placeholder}</option>
           {options.map((option) => (
             <option key={option} value={option}>
-              {option}
+              {optionLabels[option] || option}
             </option>
           ))}
         </select>

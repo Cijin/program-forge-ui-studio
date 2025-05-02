@@ -12,15 +12,25 @@ import SelectField from './SelectField';
 import RelationField from './RelationField';
 import ExerciseEntryPlaceholder from './ExerciseEntryPlaceholder';
 import ExerciseEntry from './ExerciseEntry';
+import { v4 as uuidv4 } from 'uuid';
+import { NewExerciseGroup, NewExerciseData } from '@/types/program';
 
 interface ProgramDayProps {
   dayIndex: number;
   onDelete: () => void;
   data: {
-    workoutName: string;
-    workoutType: string;
+    name: string;
+    type: string;
+    warm_up_upper_body: string;
+    warm_up_lower_body: string;
+    cool_down_upper_body: string;
+    cool_down_lower_body: string;
+    cardio: string;
+    abs: string;
+    unique_key: string;
+    exercise_groups: NewExerciseGroup[];
   };
-  onDataChange: (field: keyof ProgramDayProps['data'], value: string) => void;
+  onDataChange: (field: string, value: any) => void;
 }
 
 const ProgramDay: React.FC<ProgramDayProps> = ({ 
@@ -30,47 +40,73 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
   onDataChange 
 }) => {
   const workoutTypes = ['Strength', 'Cardio', 'Flexibility', 'HIIT', 'Recovery'];
-  const [programExercises, setProgramExercises] = useState<Array<{ sets: string; info: string }>>([]);
-  const [optionalExercises, setOptionalExercises] = useState<Array<{ sets: string; info: string }>>([]);
   
-  const [warmUpUpperBody, setWarmUpUpperBody] = useState("");
-  const [warmUpLowerBody, setWarmUpLowerBody] = useState("");
-  const [coolDownUpperBody, setCoolDownUpperBody] = useState("");
-  const [coolDownLowerBody, setCoolDownLowerBody] = useState("");
-  const [cardioAddon, setCardioAddon] = useState("");
-  const [absAddon, setAbsAddon] = useState("");
+  const addExerciseGroup = (isOptional: boolean) => {
+    const newGroup: NewExerciseGroup = {
+      info: '',
+      sets: 0,
+      is_optional: isOptional,
+      exercise_data: []
+    };
+    
+    const updatedGroups = [...data.exercise_groups];
+    updatedGroups.push(newGroup);
+    onDataChange('exercise_groups', updatedGroups);
+  };
+
+  const updateExerciseGroup = (index: number, field: string, value: any) => {
+    const updatedGroups = [...data.exercise_groups];
+    updatedGroups[index] = { ...updatedGroups[index], [field]: value };
+    onDataChange('exercise_groups', updatedGroups);
+  };
+
+  const removeExerciseGroup = (index: number) => {
+    const updatedGroups = [...data.exercise_groups];
+    updatedGroups.splice(index, 1);
+    onDataChange('exercise_groups', updatedGroups);
+  };
+
+  const addExerciseData = (groupIndex: number) => {
+    const newExercise: NewExerciseData = {
+      exercise: '',
+      sets_structure: '',
+      reps: 0,
+      reps_type: 'Count',
+      reps_time: 0,
+      is_drop_set: false,
+      is_pyramid_set: false,
+      amrap: false
+    };
+
+    const updatedGroups = [...data.exercise_groups];
+    const exerciseData = [...(updatedGroups[groupIndex].exercise_data || [])];
+    exerciseData.push(newExercise);
+    updatedGroups[groupIndex] = { ...updatedGroups[groupIndex], exercise_data: exerciseData };
+    
+    onDataChange('exercise_groups', updatedGroups);
+  };
+
+  const updateExerciseData = (groupIndex: number, exerciseIndex: number, field: string, value: any) => {
+    const updatedGroups = [...data.exercise_groups];
+    const exerciseData = [...updatedGroups[groupIndex].exercise_data];
+    exerciseData[exerciseIndex] = { ...exerciseData[exerciseIndex], [field]: value };
+    updatedGroups[groupIndex].exercise_data = exerciseData;
+    
+    onDataChange('exercise_groups', updatedGroups);
+  };
+
+  const removeExerciseData = (groupIndex: number, exerciseIndex: number) => {
+    const updatedGroups = [...data.exercise_groups];
+    const exerciseData = [...updatedGroups[groupIndex].exercise_data];
+    exerciseData.splice(exerciseIndex, 1);
+    updatedGroups[groupIndex].exercise_data = exerciseData;
+    
+    onDataChange('exercise_groups', updatedGroups);
+  };
   
-  const addProgramExercise = () => {
-    setProgramExercises([...programExercises, { sets: '', info: '' }]);
-  };
-
-  const addOptionalExercise = () => {
-    setOptionalExercises([...optionalExercises, { sets: '', info: '' }]);
-  };
-
-  const updateProgramExercise = (index: number, field: string, value: string) => {
-    const updatedExercises = [...programExercises];
-    updatedExercises[index] = { ...updatedExercises[index], [field]: value };
-    setProgramExercises(updatedExercises);
-  };
-
-  const updateOptionalExercise = (index: number, field: string, value: string) => {
-    const updatedExercises = [...optionalExercises];
-    updatedExercises[index] = { ...updatedExercises[index], [field]: value };
-    setOptionalExercises(updatedExercises);
-  };
-
-  const removeProgramExercise = (index: number) => {
-    const updatedExercises = [...programExercises];
-    updatedExercises.splice(index, 1);
-    setProgramExercises(updatedExercises);
-  };
-
-  const removeOptionalExercise = (index: number) => {
-    const updatedExercises = [...optionalExercises];
-    updatedExercises.splice(index, 1);
-    setOptionalExercises(updatedExercises);
-  };
+  // Group exercises by is_optional
+  const mandatoryGroups = data.exercise_groups.filter(group => !group.is_optional);
+  const optionalGroups = data.exercise_groups.filter(group => group.is_optional);
   
   return (
     <div className="border border-program-border rounded-lg overflow-hidden bg-program-panel p-4">
@@ -94,20 +130,20 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TextField 
           id={`workout_name_${dayIndex}`}
-          label="workout_name"
+          label="name"
           required
           placeholder="Enter workout name"
-          value={data.workoutName}
-          onChange={(value) => onDataChange('workoutName', value)}
+          value={data.name}
+          onChange={(value) => onDataChange('name', value)}
         />
         
         <SelectField 
           id={`workout_type_${dayIndex}`}
-          label="workout_type"
+          label="type"
           required
           options={workoutTypes}
-          value={data.workoutType}
-          onChange={(value) => onDataChange('workoutType', value)}
+          value={data.type}
+          onChange={(value) => onDataChange('type', value)}
         />
       </div>
       
@@ -116,16 +152,16 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
           id={`warm_up_upper_body_${dayIndex}`}
           label="warm_up_upper_body"
           type="warmup"
-          value={warmUpUpperBody}
-          onChange={setWarmUpUpperBody}
+          value={data.warm_up_upper_body}
+          onChange={(value) => onDataChange('warm_up_upper_body', value)}
         />
         
         <RelationField 
           id={`warm_up_lower_body_${dayIndex}`}
           label="warm_up_lower_body"
           type="warmup"
-          value={warmUpLowerBody}
-          onChange={setWarmUpLowerBody}
+          value={data.warm_up_lower_body}
+          onChange={(value) => onDataChange('warm_up_lower_body', value)}
         />
       </div>
       
@@ -134,16 +170,16 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
           id={`cool_down_upper_body_${dayIndex}`}
           label="cool_down_upper_body"
           type="cooldown"
-          value={coolDownUpperBody}
-          onChange={setCoolDownUpperBody}
+          value={data.cool_down_upper_body}
+          onChange={(value) => onDataChange('cool_down_upper_body', value)}
         />
         
         <RelationField 
           id={`cool_down_lower_body_${dayIndex}`}
           label="cool_down_lower_body"
           type="cooldown"
-          value={coolDownLowerBody}
-          onChange={setCoolDownLowerBody}
+          value={data.cool_down_lower_body}
+          onChange={(value) => onDataChange('cool_down_lower_body', value)}
         />
       </div>
       
@@ -152,41 +188,99 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
           id={`cardio_${dayIndex}`}
           label="cardio"
           type="cardio"
-          value={cardioAddon}
-          onChange={setCardioAddon}
+          value={data.cardio}
+          onChange={(value) => onDataChange('cardio', value)}
         />
       </div>
       
       <div className="mt-4">
         <Accordion type="single" collapsible className="border-none">
-          <AccordionItem value="program_exercise" className="border-none">
+          <AccordionItem value="exercise_groups_mandatory" className="border-none">
             <AccordionTrigger className="py-2 hover:no-underline">
-              <span className="text-sm text-gray-300">program_exercise ({programExercises.length})</span>
+              <span className="text-sm text-gray-300">mandatory_exercises ({mandatoryGroups.length})</span>
             </AccordionTrigger>
             <AccordionContent>
               <div className="border border-program-border rounded mt-1">
-                {programExercises.length > 0 ? (
+                {mandatoryGroups.length > 0 ? (
                   <div className="p-2">
-                    {programExercises.map((exercise, index) => (
-                      <ExerciseEntry 
-                        key={index} 
-                        index={index + 1}
-                        entryData={exercise}
-                        onDataChange={(field, value) => updateProgramExercise(index, field, value)}
-                        onDelete={() => removeProgramExercise(index)}
-                      />
+                    {mandatoryGroups.map((group, groupIndex) => (
+                      <div key={groupIndex} className="mb-4 border border-program-border rounded-lg p-3 bg-program-dark">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="text-white text-sm">Group {groupIndex + 1}</h4>
+                          <button
+                            type="button"
+                            onClick={() => removeExerciseGroup(data.exercise_groups.indexOf(group))}
+                            className="text-program-accent hover:text-red-300"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <TextField
+                            id={`group_info_${groupIndex}`}
+                            label="info"
+                            required
+                            placeholder="Group information"
+                            value={group.info}
+                            onChange={(value) => updateExerciseGroup(data.exercise_groups.indexOf(group), 'info', value)}
+                          />
+                          
+                          <TextField
+                            id={`group_sets_${groupIndex}`}
+                            label="sets"
+                            required
+                            type="number"
+                            placeholder="Number of sets"
+                            value={group.sets.toString()}
+                            onChange={(value) => updateExerciseGroup(data.exercise_groups.indexOf(group), 'sets', parseInt(value) || 0)}
+                          />
+                        </div>
+                        
+                        <div className="mt-4">
+                          <h5 className="text-sm text-gray-300 mb-2">Exercises</h5>
+                          {group.exercise_data && group.exercise_data.length > 0 ? (
+                            <div className="space-y-3">
+                              {group.exercise_data.map((exerciseData, exerciseIndex) => (
+                                <ExerciseEntry
+                                  key={exerciseIndex}
+                                  index={exerciseIndex + 1}
+                                  entryData={exerciseData}
+                                  onDataChange={(field, value) => updateExerciseData(
+                                    data.exercise_groups.indexOf(group),
+                                    exerciseIndex,
+                                    field,
+                                    value
+                                  )}
+                                  onDelete={() => removeExerciseData(data.exercise_groups.indexOf(group), exerciseIndex)}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <ExerciseEntryPlaceholder label="exercise" />
+                          )}
+                          <button
+                            type="button"
+                            className="w-full py-2 flex items-center justify-center gap-2 text-program-accent hover:bg-program-panel mt-2"
+                            onClick={() => addExerciseData(data.exercise_groups.indexOf(group))}
+                          >
+                            <Plus size={18} />
+                            <span>Add Exercise</span>
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <ExerciseEntryPlaceholder label="program_exercise" />
+                  <div className="p-6 text-center text-gray-400">No mandatory exercise groups added yet</div>
                 )}
                 <button
                   type="button"
                   className="w-full py-3 flex items-center justify-center gap-2 text-program-accent hover:bg-program-panel"
-                  onClick={addProgramExercise}
+                  onClick={() => addExerciseGroup(false)}
                 >
                   <Plus size={18} />
-                  <span>Add an entry</span>
+                  <span>Add Group</span>
                 </button>
               </div>
             </AccordionContent>
@@ -196,34 +290,92 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
       
       <div className="mt-4">
         <Accordion type="single" collapsible className="border-none">
-          <AccordionItem value="optional_exercise" className="border-none">
+          <AccordionItem value="exercise_groups_optional" className="border-none">
             <AccordionTrigger className="py-2 hover:no-underline">
-              <span className="text-sm text-gray-300">optional_exercise ({optionalExercises.length})</span>
+              <span className="text-sm text-gray-300">optional_exercises ({optionalGroups.length})</span>
             </AccordionTrigger>
             <AccordionContent>
               <div className="border border-program-border rounded mt-1">
-                {optionalExercises.length > 0 ? (
+                {optionalGroups.length > 0 ? (
                   <div className="p-2">
-                    {optionalExercises.map((exercise, index) => (
-                      <ExerciseEntry 
-                        key={index} 
-                        index={index + 1}
-                        entryData={exercise}
-                        onDataChange={(field, value) => updateOptionalExercise(index, field, value)}
-                        onDelete={() => removeOptionalExercise(index)}
-                      />
+                    {optionalGroups.map((group, groupIndex) => (
+                      <div key={groupIndex} className="mb-4 border border-program-border rounded-lg p-3 bg-program-dark">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="text-white text-sm">Optional Group {groupIndex + 1}</h4>
+                          <button
+                            type="button"
+                            onClick={() => removeExerciseGroup(data.exercise_groups.indexOf(group))}
+                            className="text-program-accent hover:text-red-300"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <TextField
+                            id={`optional_group_info_${groupIndex}`}
+                            label="info"
+                            required
+                            placeholder="Group information"
+                            value={group.info}
+                            onChange={(value) => updateExerciseGroup(data.exercise_groups.indexOf(group), 'info', value)}
+                          />
+                          
+                          <TextField
+                            id={`optional_group_sets_${groupIndex}`}
+                            label="sets"
+                            required
+                            type="number"
+                            placeholder="Number of sets"
+                            value={group.sets.toString()}
+                            onChange={(value) => updateExerciseGroup(data.exercise_groups.indexOf(group), 'sets', parseInt(value) || 0)}
+                          />
+                        </div>
+                        
+                        <div className="mt-4">
+                          <h5 className="text-sm text-gray-300 mb-2">Exercises</h5>
+                          {group.exercise_data && group.exercise_data.length > 0 ? (
+                            <div className="space-y-3">
+                              {group.exercise_data.map((exerciseData, exerciseIndex) => (
+                                <ExerciseEntry
+                                  key={exerciseIndex}
+                                  index={exerciseIndex + 1}
+                                  entryData={exerciseData}
+                                  onDataChange={(field, value) => updateExerciseData(
+                                    data.exercise_groups.indexOf(group),
+                                    exerciseIndex,
+                                    field,
+                                    value
+                                  )}
+                                  onDelete={() => removeExerciseData(data.exercise_groups.indexOf(group), exerciseIndex)}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <ExerciseEntryPlaceholder label="exercise" />
+                          )}
+                          <button
+                            type="button"
+                            className="w-full py-2 flex items-center justify-center gap-2 text-program-accent hover:bg-program-panel mt-2"
+                            onClick={() => addExerciseData(data.exercise_groups.indexOf(group))}
+                          >
+                            <Plus size={18} />
+                            <span>Add Exercise</span>
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <ExerciseEntryPlaceholder label="optional_exercise" />
+                  <div className="p-6 text-center text-gray-400">No optional exercise groups added yet</div>
                 )}
                 <button
                   type="button"
                   className="w-full py-3 flex items-center justify-center gap-2 text-program-accent hover:bg-program-panel"
-                  onClick={addOptionalExercise}
+                  onClick={() => addExerciseGroup(true)}
                 >
                   <Plus size={18} />
-                  <span>Add an entry</span>
+                  <span>Add Group</span>
                 </button>
               </div>
             </AccordionContent>
@@ -236,8 +388,8 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
           id={`abs_${dayIndex}`}
           label="abs"
           type="abs"
-          value={absAddon}
-          onChange={setAbsAddon}
+          value={data.abs}
+          onChange={(value) => onDataChange('abs', value)}
         />
       </div>
     </div>
