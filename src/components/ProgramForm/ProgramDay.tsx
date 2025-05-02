@@ -1,10 +1,17 @@
 
-import React from 'react';
-import { Trash2 } from "lucide-react";
+import React, { useState } from 'react';
+import { Trash2, ChevronDown } from "lucide-react";
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from "@/components/ui/accordion";
 import TextField from './TextField';
 import SelectField from './SelectField';
 import RelationField from './RelationField';
 import ExerciseEntryPlaceholder from './ExerciseEntryPlaceholder';
+import ExerciseEntry from './ExerciseEntry';
 
 interface ProgramDayProps {
   dayIndex: number;
@@ -23,6 +30,40 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
   onDataChange 
 }) => {
   const workoutTypes = ['Strength', 'Cardio', 'Flexibility', 'HIIT', 'Recovery'];
+  const [programExercises, setProgramExercises] = useState<Array<{ sets: string; info: string }>>([]);
+  const [optionalExercises, setOptionalExercises] = useState<Array<{ sets: string; info: string }>>([]);
+  
+  const addProgramExercise = () => {
+    setProgramExercises([...programExercises, { sets: '', info: '' }]);
+  };
+
+  const addOptionalExercise = () => {
+    setOptionalExercises([...optionalExercises, { sets: '', info: '' }]);
+  };
+
+  const updateProgramExercise = (index: number, field: string, value: string) => {
+    const updatedExercises = [...programExercises];
+    updatedExercises[index] = { ...updatedExercises[index], [field]: value };
+    setProgramExercises(updatedExercises);
+  };
+
+  const updateOptionalExercise = (index: number, field: string, value: string) => {
+    const updatedExercises = [...optionalExercises];
+    updatedExercises[index] = { ...updatedExercises[index], [field]: value };
+    setOptionalExercises(updatedExercises);
+  };
+
+  const removeProgramExercise = (index: number) => {
+    const updatedExercises = [...programExercises];
+    updatedExercises.splice(index, 1);
+    setProgramExercises(updatedExercises);
+  };
+
+  const removeOptionalExercise = (index: number) => {
+    const updatedExercises = [...optionalExercises];
+    updatedExercises.splice(index, 1);
+    setOptionalExercises(updatedExercises);
+  };
   
   return (
     <div className="border border-program-border rounded-lg overflow-hidden bg-program-panel p-4">
@@ -95,17 +136,77 @@ const ProgramDay: React.FC<ProgramDayProps> = ({
       </div>
       
       <div className="mt-4">
-        <label className="text-sm text-gray-300">program_exercise (0)</label>
-        <div className="border border-program-border rounded mt-1">
-          <ExerciseEntryPlaceholder label="program_exercise" />
-        </div>
+        <Accordion type="single" collapsible className="border-none">
+          <AccordionItem value="program_exercise" className="border-none">
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <span className="text-sm text-gray-300">program_exercise ({programExercises.length})</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="border border-program-border rounded mt-1">
+                {programExercises.length > 0 ? (
+                  <div className="p-2">
+                    {programExercises.map((exercise, index) => (
+                      <ExerciseEntry 
+                        key={index} 
+                        index={index + 1}
+                        entryData={exercise}
+                        onDataChange={(field, value) => updateProgramExercise(index, field, value)}
+                        onDelete={() => removeProgramExercise(index)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <ExerciseEntryPlaceholder label="program_exercise" />
+                )}
+                <button
+                  type="button"
+                  className="w-full py-3 flex items-center justify-center gap-2 text-program-accent hover:bg-program-panel"
+                  onClick={addProgramExercise}
+                >
+                  <Plus size={18} />
+                  <span>Add an entry</span>
+                </button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
       
       <div className="mt-4">
-        <label className="text-sm text-gray-300">optional_exercise (0)</label>
-        <div className="border border-program-border rounded mt-1">
-          <ExerciseEntryPlaceholder label="optional_exercise" />
-        </div>
+        <Accordion type="single" collapsible className="border-none">
+          <AccordionItem value="optional_exercise" className="border-none">
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <span className="text-sm text-gray-300">optional_exercise ({optionalExercises.length})</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="border border-program-border rounded mt-1">
+                {optionalExercises.length > 0 ? (
+                  <div className="p-2">
+                    {optionalExercises.map((exercise, index) => (
+                      <ExerciseEntry 
+                        key={index} 
+                        index={index + 1}
+                        entryData={exercise}
+                        onDataChange={(field, value) => updateOptionalExercise(index, field, value)}
+                        onDelete={() => removeOptionalExercise(index)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <ExerciseEntryPlaceholder label="optional_exercise" />
+                )}
+                <button
+                  type="button"
+                  className="w-full py-3 flex items-center justify-center gap-2 text-program-accent hover:bg-program-panel"
+                  onClick={addOptionalExercise}
+                >
+                  <Plus size={18} />
+                  <span>Add an entry</span>
+                </button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
       
       <div className="mt-4">
