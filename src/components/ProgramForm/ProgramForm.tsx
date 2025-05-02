@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +33,8 @@ const ProgramForm: React.FC = () => {
       exercise_groups: [] 
     }
   ]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fitnessLevels = ['Beginner', 'Intermediate', 'Advanced'];
   const minutesOptions = ['15', '30', '45', '60', '90'];
@@ -78,17 +79,42 @@ const ProgramForm: React.FC = () => {
     setProgramDays(updatedDays);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    // Create the final program object
-    const program: NewProgram = {
-      ...formData,
-      program_days: programDays
-    };
-    
-    console.log('Program Data:', program);
-    toast.success("Program created successfully!");
+    try {
+      // Create the final program object
+      const program: NewProgram = {
+        ...formData,
+        program_days: programDays
+      };
+      
+      console.log('Sending program data:', program);
+      
+      // Make the POST API request
+      const response = await fetch('/api/programs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(program),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('API response:', data);
+      
+      toast.success("Program created successfully!");
+    } catch (error) {
+      console.error('Error creating program:', error);
+      toast.error("Failed to create program. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBack = () => {
@@ -217,9 +243,10 @@ const ProgramForm: React.FC = () => {
           <div className="mt-8 flex justify-end">
             <button 
               type="submit"
-              className="px-6 py-2 bg-program-accent text-white rounded hover:bg-opacity-80 transition-colors"
+              className="px-6 py-2 bg-program-accent text-white rounded hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
             >
-              Create Program
+              {isSubmitting ? "Creating..." : "Create Program"}
             </button>
           </div>
         </form>
